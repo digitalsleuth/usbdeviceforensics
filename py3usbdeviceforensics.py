@@ -113,7 +113,7 @@ def process(registry_path, output, format):
                 traceback.print_exc(file=sys.stdout)
                 traceback.print_stack()
                 print(err.args)
-                print(err) #print(err.message)
+                print(err)
 
     output_data_to_console()
 
@@ -162,15 +162,15 @@ def process_registry_hive(registry_path, hive_type):
                 traceback.print_exc(file=sys.stdout)
                 traceback.print_stack()
                 print(err.args)
-                print(err) #print(err.message)
+                print(err)
 
 
 def output_data_to_console():
     """Outputs the data to StdOut and an output file if required"""
     for device in usb_devices:
-        print("Vendor: " + device.vendor)
-        print("Product: " + device.product)
-        print("Version: " + device.version)
+        print("Vendor: " + (device.vendor).replace('Ven_',''))
+        print("Product: " + (device.product).replace('Prod_',''))
+        print("Version: " + (device.version).replace('Rev_',''))
         print("Serial Number: " + device.serial_number)
         print("VID: " + device.vid)
         print("PID: " + device.pid)
@@ -232,7 +232,7 @@ def output_data_to_file_csv(output):
     write_debug(name='Max Number EmdMgmt', value=str(numEmdMgmt))
     write_debug(name='Max Number MountPoints2', value=str(numMp2))
 
-    with open(output, "wb") as f:
+    with open(output, "w") as f:
         # Write the CSV headers
         f.write("Vendor\tProduct\tVersion\tSerialNumber\tVID\tPID\tParentIDPrefix\tDriveLetter\tVolumeName\tGUID\tMountPoint\tInstall\tUSBSTOR\tUSBSTOR Properties (Install Date)\tUSBSTOR Properties (First Install Date)\tUSBSTOR Properties (Last Arrival Date)\tUSBSTOR Properties (Last Removal Date)\tDeviceClasses (53f56307-b6bf-11d0-94f2-00a0c91efb8b)\tDeviceClasses (10497b1b-ba51-44e5-8318-a65c837b6661)\tEnum\\USB VIDPID\t")
 
@@ -266,17 +266,17 @@ def output_data_to_file_csv(output):
         writer = csv.writer(f, delimiter='\t', quotechar='"', quoting=csv.QUOTE_ALL)
         for device in usb_devices:
             data = []
-            data.append(device.vendor.encode('utf-8'))
-            data.append(device.product.encode('utf-8'))
-            data.append(device.version.encode('utf-8'))
-            data.append(device.serial_number.encode('utf-8'))
-            data.append(device.vid.encode('utf-8'))
-            data.append(device.pid.encode('utf-8'))
-            data.append(device.parent_prefix_id.encode('utf-8'))
-            data.append(device.drive_letter.encode('utf-8'))
-            data.append(device.volume_name.encode('utf-8'))
-            data.append(device.guid.encode('utf-8'))
-            data.append(device.mountpoint.encode('utf-8'))
+            data.append((device.vendor).replace('Ven_',''))
+            data.append((device.product).replace('Prod_',''))
+            data.append((device.version).replace('Rev_',''))
+            data.append(device.serial_number)
+            data.append(device.vid)
+            data.append(device.pid)
+            data.append(device.parent_prefix_id)
+            data.append(device.drive_letter)
+            data.append(device.volume_name)
+            data.append(device.guid)
+            data.append(device.mountpoint)
             if device.install_datetime != datetime.min:
                 data.append(device.install_datetime)
             else:
@@ -327,9 +327,9 @@ def output_data_to_file_csv(output):
             for em in device.emdmgmt:
                 if em.timestamp != datetime.min:
                     data.append(em.timestamp)
-                data.append(em.volume_serial_num.encode('utf-8'))
-                data.append(em.volume_serial_num_hex.encode('utf-8'))
-                data.append(em.volume_name.encode('utf-8'))
+                data.append(em.volume_serial_num)
+                data.append(em.volume_serial_num_hex)
+                data.append(em.volume_name)
 
             # Balance out the EmdMgmt columns
             if len(device.emdmgmt) < numEmdMgmt:
@@ -1123,7 +1123,7 @@ def get_key(reg_key, key_name):
     try:
         for sk in reg_key.subkeys():
             if quiet_mode is False:
-                print(sk.name())
+                write_debug(data="Subkey: " + sk.name())
         return reg_key.find_key(key_name)
     except:
         return None
