@@ -1,11 +1,29 @@
-import sys
-from cx_Freeze import setup, Executable
+#!/usr/bin/env python3
+from setuptools import setup, find_packages
 
-# Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["Registry"]}
+with open("README.md", encoding='utf8') as readme:
+    long_description = readme.read()
 
-setup(  name = "usbdeviceforensics",
-        version = "0.0.3",
-        description = "usbdeviceforensics",
-        options = {"build_exe": build_exe_options},
-        executables = [Executable("usbdeviceforensics.py")])
+setup(
+    name="usbdeviceforensics",
+    version="1.0.0",
+    author="Mark Woan, Corey Forman",
+    url="https://github.com/digitalsleuth/usbdeviceforensics",
+    description=("Python3 tool for extracting USB information from Windows Registry hives"),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    packages=find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ],
+    install_requires=[
+        "Registry"
+    ],
+    entry_points={
+        'console_scripts': [
+            'usbdeviceforensics = usbdeviceforensics.usbdeviceforensics:main'
+        ]
+    },
+    package_data={'': ['README.md']}
+)

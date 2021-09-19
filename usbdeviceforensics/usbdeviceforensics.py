@@ -1,10 +1,5 @@
 #!/usr/bin/python3
 
-# This file is part of usbdeviceforensics. usbdeviceforensics is a python console based port of woanware's
-# UsbDeviceForensics .Net WinForms GUI application.
-#
-# Copyright 2015 Mark Woan <markwoan[@]gmail.com>
-
 import argparse
 import os
 from Registry import *
@@ -14,6 +9,11 @@ from enum import Enum
 from datetime import datetime, timedelta
 import re
 import csv
+
+__version__ = "1.0.0"
+__maintainer__ = "Corey Forman"
+__original_author__ = "Mark Woan"
+__updated__ = "19 Sep 2021"
 
 # Enums #######################################################################
 
@@ -80,6 +80,7 @@ class UsbDevice():
         self.vid_pid_datetime = datetime.min
         self.usb_stor_datetime = datetime.min
         self.install_datetime = datetime.min
+        self.usbstor_datetime03 = datetime.min
         self.usbstor_datetime64 = datetime.min
         self.usbstor_datetime65 = datetime.min
         self.usbstor_datetime66 = datetime.min
@@ -120,8 +121,8 @@ def process(registry_path, output, format):
     if output is None:
         return
 
-    if format == "csv":
-        output_data_to_file_csv(output)
+    if format == "tsv":
+        output_data_to_file_tsv(output)
     else:
         output_data_to_file_text(output)
 
@@ -191,6 +192,8 @@ def output_data_to_console():
             print("USBSTOR Timestamp: " + device.usb_stor_datetime.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.install_datetime != datetime.min:
             print("Install Timestamp: " + device.install_datetime.strftime('%Y-%m-%dT%H:%M:%S'))
+        if device.usbstor_datetime03 != datetime.min:
+            print("USBSTOR Timestamp (03): " + device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.usbstor_datetime64 != datetime.min:
             print("USBSTOR Timestamp (64): " + device.usbstor_datetime64.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.usbstor_datetime65 != datetime.min:
@@ -215,9 +218,9 @@ def output_data_to_console():
         print('------------------------------------------------------------------------------')
 
 
-def output_data_to_file_csv(output):
-    """Outputs the data to a file in CSV format"""
-    write_debug(data='Method: output_data_to_file_csv')
+def output_data_to_file_tsv(output):
+    """Outputs the data to a file in TSV format"""
+    write_debug(data='Method: output_data_to_file_tsv')
 
     numMp2 = 0
     for device in usb_devices:
@@ -233,7 +236,7 @@ def output_data_to_file_csv(output):
     write_debug(name='Max Number MountPoints2', value=str(numMp2))
 
     with open(output, "w") as f:
-        # Write the CSV headers
+        # Write the TSV headers
         f.write("Vendor\tProduct\tVersion\tSerialNumber\tVID\tPID\tParentIDPrefix\tDriveLetter\tVolumeName\tGUID\tMountPoint\tInstall\tUSBSTOR\tUSBSTOR Properties (Install Date)\tUSBSTOR Properties (First Install Date)\tUSBSTOR Properties (Last Arrival Date)\tUSBSTOR Properties (Last Removal Date)\tDeviceClasses (53f56307-b6bf-11d0-94f2-00a0c91efb8b)\tDeviceClasses (10497b1b-ba51-44e5-8318-a65c837b6661)\tEnum\\USB VIDPID\t")
 
         temp = ''
@@ -283,6 +286,10 @@ def output_data_to_file_csv(output):
                 data.append('')
             if device.usb_stor_datetime != datetime.min:
                 data.append(device.usb_stor_datetime)
+            else:
+                data.append('')
+            if device.usbstor_datetime03 != datetime.min:
+                data.append(device.usbstor_datetime03)
             else:
                 data.append('')
             if device.usbstor_datetime64 != datetime.min:
@@ -372,6 +379,8 @@ def output_data_to_file_text(output):
                 f.write("USBSTOR Timestamp: " + str(device.usb_stor_datetime.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.install_datetime != datetime.min:
                 f.write("Install Timestamp: " + str(device.install_datetime.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
+            if device.usbstor_datetime03 != datetime.min:
+                f.write("USBSTOR Timestamp (03): " + str(device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.usbstor_datetime64 != datetime.min:
                 f.write("USBSTOR Timestamp (64): " + str(device.usbstor_datetime64.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.usbstor_datetime65 != datetime.min:
@@ -540,6 +549,15 @@ def process_usb_stor_properties(registry):
                         if sub_key_device.name().lower() != 'properties':
                             continue
 
+                        key03 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\00000003\00000000')
+                        if key03 is not None:
+                            value03 = get_reg_value(key03, 'Data')
+                            if value03 is not None:
+                                usb_device.usbstor_datetime03 = key03.timestamp()
+                                write_debug(name='USBSTOR date/time (03)', value=usb_device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
+                        else:
+                            write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\00000003\\00000000 is None')
+
                         key64 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\00000064\00000000')
                         if key64 is not None:
                             value64 = get_reg_value(key64, 'Data')
@@ -557,6 +575,15 @@ def process_usb_stor_properties(registry):
                                 write_debug(name='USBSTOR date/time (65)', value=usb_device.usbstor_datetime65.strftime('%Y-%m-%dT%H:%M:%S'))
                         else:
                             write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000 is None')
+
+                        key03win8 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\0003')
+                        if key03win8 is not None:
+                            value03win8 = get_reg_value(key03win8, '(default)')
+                            if value03win8 is not None:
+                                usb_device.usbstor_datetime03 = key03win8.timestamp()
+                                write_debug(name='USBSTOR date/time (03)', value=usb_device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
+                        else:
+                            write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\0003 is None')
 
                         key64win8 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\0064')
                         if key64win8 is not None:
@@ -875,7 +902,8 @@ def process_mountpoints2(registry, reg_file_path):
     """Processes the Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2 key"""
     try:
         key = registry.open('Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2')
-
+        activeSetup = registry.open('Software\\Microsoft\\Active Setup\\Installed Components\\{44BBA840-CC51-11CF-AAFA-00AA00B6015C}')
+        username = activeSetup.value('Username').value()
         global usb_devices
 
         for usb_device in usb_devices:
@@ -888,11 +916,11 @@ def process_mountpoints2(registry, reg_file_path):
                     continue
 
                 mp2 = MountPoint2()
-                mp2.file = reg_file_path
+                mp2.file = username + "\\" + reg_file_path
                 mp2.timestamp = sub_key.timestamp()
                 usb_device.mountpoint2.append(mp2)
 
-                write_debug(name='Mountpoint2 file', value=mp2.file)
+                write_debug(name='Mountpoint2 file', value= username + "\\" + mp2.file)
                 write_debug(name='Mountpoint2 date/time', value=mp2.timestamp.strftime('%Y-%m-%dT%H:%M:%S'))
 
     except Registry.RegistryKeyNotFoundException:
@@ -908,7 +936,7 @@ def process_log_file(file):
     regexVista1 = b'>>> *\[Device Install \(Hardware initiated\) - USBSTOR\\(.+)\]'
     regexVista2 = b'>>>\s\sSection\sstart\s([0-9]+/[0-9]+/[0-9]+\s[0-9]+:[0-9]+:[0-9]+\.[0-9]+)'
     regexWin78 = b'>>>\s\s\[Device\sInstall\s\(Hardware\sinitiated\) - SWD\\WPDBUSENUM\\_\?\?_USBSTOR#(.*)\]'
-    
+
     with open(file, 'rb') as f:
         lines = f.readlines()
     f.close()
@@ -1148,11 +1176,16 @@ def remove_non_ascii_characters(data):
 def main():
     """Parse the command line parameters and load the configuration."""
     parser = argparse.ArgumentParser(description='Example: usbdeviceforensics --registry "/case/registryhives" ')
-    parser.add_argument('-o', '--output', help='The output file name')
-    parser.add_argument('-f', '--format', choices=['csv', 'text'], help='Output format')
+    parser.add_argument('-o', '--output', help='Output file name')
+    parser.add_argument('-f', '--format', choices=['tsv', 'text'], help='Output format - default is tsv')
     parser.add_argument('-d', '--debug', action='store_true', help='Debug mode, which outputs details VERY verbosely')
     parser.add_argument('-r', '--registry', required=True, help='Path to registry hives')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='Supress output to the terminal')
+
+    if len(sys.argv[1:]) == 0:
+        parser.print_help()
+        parser.exit()
+
     args = parser.parse_args()
 
     if args.debug is True:
