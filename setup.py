@@ -18,7 +18,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "Registry"
+        "python-registry"
     ],
     entry_points={
         'console_scripts': [

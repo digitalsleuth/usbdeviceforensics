@@ -80,7 +80,6 @@ class UsbDevice():
         self.vid_pid_datetime = datetime.min
         self.usb_stor_datetime = datetime.min
         self.install_datetime = datetime.min
-        self.usbstor_datetime03 = datetime.min
         self.usbstor_datetime64 = datetime.min
         self.usbstor_datetime65 = datetime.min
         self.usbstor_datetime66 = datetime.min
@@ -192,8 +191,6 @@ def output_data_to_console():
             print("USBSTOR Timestamp: " + device.usb_stor_datetime.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.install_datetime != datetime.min:
             print("Install Timestamp: " + device.install_datetime.strftime('%Y-%m-%dT%H:%M:%S'))
-        if device.usbstor_datetime03 != datetime.min:
-            print("USBSTOR Timestamp (03): " + device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.usbstor_datetime64 != datetime.min:
             print("USBSTOR Timestamp (64): " + device.usbstor_datetime64.strftime('%Y-%m-%dT%H:%M:%S'))
         if device.usbstor_datetime65 != datetime.min:
@@ -288,10 +285,6 @@ def output_data_to_file_tsv(output):
                 data.append(device.usb_stor_datetime)
             else:
                 data.append('')
-            if device.usbstor_datetime03 != datetime.min:
-                data.append(device.usbstor_datetime03)
-            else:
-                data.append('')
             if device.usbstor_datetime64 != datetime.min:
                 data.append(device.usbstor_datetime64)
             else:
@@ -379,8 +372,6 @@ def output_data_to_file_text(output):
                 f.write("USBSTOR Timestamp: " + str(device.usb_stor_datetime.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.install_datetime != datetime.min:
                 f.write("Install Timestamp: " + str(device.install_datetime.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
-            if device.usbstor_datetime03 != datetime.min:
-                f.write("USBSTOR Timestamp (03): " + str(device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.usbstor_datetime64 != datetime.min:
                 f.write("USBSTOR Timestamp (64): " + str(device.usbstor_datetime64.strftime('%Y-%m-%dT%H:%M:%S')) + '\n')
             if device.usbstor_datetime65 != datetime.min:
@@ -549,15 +540,6 @@ def process_usb_stor_properties(registry):
                         if sub_key_device.name().lower() != 'properties':
                             continue
 
-                        key03 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\00000003\00000000')
-                        if key03 is not None:
-                            value03 = get_reg_value(key03, 'Data')
-                            if value03 is not None:
-                                usb_device.usbstor_datetime03 = key03.timestamp()
-                                write_debug(name='USBSTOR date/time (03)', value=usb_device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
-                        else:
-                            write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\00000003\\00000000 is None')
-
                         key64 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\00000064\00000000')
                         if key64 is not None:
                             value64 = get_reg_value(key64, 'Data')
@@ -575,15 +557,6 @@ def process_usb_stor_properties(registry):
                                 write_debug(name='USBSTOR date/time (65)', value=usb_device.usbstor_datetime65.strftime('%Y-%m-%dT%H:%M:%S'))
                         else:
                             write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000 is None')
-
-                        key03win8 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\0003')
-                        if key03win8 is not None:
-                            value03win8 = get_reg_value(key03win8, '(default)')
-                            if value03win8 is not None:
-                                usb_device.usbstor_datetime03 = key03win8.timestamp()
-                                write_debug(name='USBSTOR date/time (03)', value=usb_device.usbstor_datetime03.strftime('%Y-%m-%dT%H:%M:%S'))
-                        else:
-                            write_debug(data='{83da6326-97a6-4088-9453-a1923f573b29}\\0003 is None')
 
                         key64win8 = get_key(sub_key_device, r'{83da6326-97a6-4088-9453-a1923f573b29}\0064')
                         if key64win8 is not None:
