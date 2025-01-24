@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # This file is part of usbdeviceforensics. usbdeviceforensics is a python console based port of woanware's
 # UsbDeviceForensics .Net WinForms GUI application.
